@@ -6,113 +6,107 @@ ThreeWire myWire(4, 5, 3); // IO, SCLK, CE 디지털 연결 번호
 RtcDS1302<ThreeWire> Rtc(myWire);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // LCD 주소, 크기 (16x2)
 
-int buzzerPin = 8; // 부저 핀
+int buzzerPin = 8;       // 부저 핀
+int btnPin = 2;          // 버튼 핀
 
-void setup() {    
+// Jingle Bells 음계 및 길이
+int melody[] = {
+    330, 330, 330, 330, 330, 330, 330, 392, 262, 294, 330, 349, 349, 349, 349,
+    330, 330, 330, 294, 294, 330, 294, 392
+};
+int duration[] = {
+    300, 300, 600, 300, 300, 600, 300, 300, 300, 300, 600, 300, 300, 300, 300,
+    300, 300, 300, 300, 300, 300, 300, 600
+};
+
+int noteCount = sizeof(melody) / sizeof(melody[0]);
+int currentNote = 0;              // 현재 음표 인덱스
+unsigned long noteStartTime = 0;  // 음표 시작 시간
+
+bool isBuzzerOn = false;          // 부저 상태 (기본값: 꺼짐)
+
+void setup() {
     Serial.begin(9600);
     lcd.begin();
     lcd.backlight();
     Rtc.Begin();
     pinMode(buzzerPin, OUTPUT);
+    pinMode(btnPin, INPUT_PULLUP); // 버튼 핀을 풀업 저항으로 설정
 
-    // RTC 모듈의 날짜와 시간 초기화 (2024년 12월 9일 오전 12시 2분)
-    RtcDateTime compiled(2024, 12, 9, 12, 2, 0);
+    // RTC 모듈 초기화 (2024년 12월 9일 오전 12시 2분)
+    RtcDateTime compiled(2024, 12, 9, 12, 2, 58);
     Rtc.SetDateTime(compiled);
 
-    // RTC 시간을 읽어서 시리얼 모니터에 출력
+    // 초기화 메시지 출력
     RtcDateTime now = Rtc.GetDateTime();
-    printDateTime(now);  // 현재 시간 시리얼 모니터에 출력
+    printDateTime(now);
     Serial.println();
+    lcd.clear();
+    lcd.print("RTC Initialized");
+    delay(2000);
 }
 
 void loop() {
-    RtcDateTime now = Rtc.GetDateTime(); // 현재 시간 가져오기
-    printDateTime(now);  // 시리얼 모니터에 현재 시간 출력
-    Serial.println();
+    static int lastButtonState = HIGH; // 이전 버튼 상태 저장
+    static bool buttonPressed = false; // 버튼이 눌렸는지 여부
 
-    // 2024년 12월 9일 오전 12시 3분에 LCD에 메시지 출력
-    if (now.Year() == 2024 && now.Month() == 12 && now.Day() == 9 && now.Hour() == 12 && now.Minute() == 3) {
-        lcd.clear(); // 화면을 지운 후
-        lcd.print("2024-12-9");
-        lcd.setCursor(0, 1); // 두 번째 줄로 이동
-        lcd.print("Wake up");
+    int btnState = digitalRead(btnPin); // 버튼 상태 읽기
 
-        // "징글벨" 소리 울리기
-        playJingleBells();
+    // 버튼 눌림 확인 (디바운싱 처리 추가)
+    if (btnState == LOW && lastButtonState == HIGH) {
+        delay(50); // 디바운싱을 위한 잠시 대기
+        buttonPressed = !buttonPressed; // 상태 토글
+        if (buttonPressed) {
+            isBuzzerOn = true; // 부저 켜기
+              // 부저 소리 끄기
+            Serial.println("Button Pressed: Buzzer ON");
+        } else {
+            isBuzzerOn = false; // 부저 끄기
+            Serial.println("Button Released: Buzzer FF");
+            noTone(buzzerPin);
+        }
     }
 
-    delay(1000);  // 1초 대기
+    lastButtonState = btnState; // 버튼 상태 업데이트
+
+    // 현재 시간 가져오기
+    RtcDateTime now = Rtc.GetDateTime();
+    printDateTime(now);
+    Serial.println();
+
+    // 특정 시간에 LCD 메시지 출력 및 멜로디 재생
+    if (now.Year() == 2024 && now.Month() == 12 && now.Day() == 9 && now.Hour() == 12 && now.Minute() == 3) {
+        lcd.clear();
+        lcd.print("2024-12-9");
+        lcd.setCursor(0, 1);
+        lcd.print("Wake Up!");
+
+        // 부저 상태가 켜져 있으면 멜로디 재생
+        if (isBuzzerOn) {
+            playMelody();
+        }
+    } else {
+        noTone(buzzerPin); // 알람 시간이 아니면 부저 끄기
+    }
+
+    delay(1000); // 1초 대기
 }
 
-// "징글벨" 부저 소리 함수
-void playJingleBells() {
-    // 첫 번째 소절
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 330, 600); // 미
-    delay(600);
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 330, 600); // 미
-    delay(600);
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 392, 300); // 솔
-    delay(300);
-    tone(buzzerPin, 262, 300); // 도
-    delay(300);
-    tone(buzzerPin, 294, 300); // 레
-    delay(300);
-    tone(buzzerPin, 330, 600); // 미
-    delay(600);
-
-    // 두 번째 소절
-    tone(buzzerPin, 349, 300); // 파
-    delay(300);
-    tone(buzzerPin, 349, 300); // 파
-    delay(300);
-    tone(buzzerPin, 349, 300); // 파
-    delay(300);
-    tone(buzzerPin, 349, 300); // 파
-    delay(300);
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 294, 300); // 레
-    delay(300);
-    tone(buzzerPin, 294, 300); // 레
-    delay(300);
-    tone(buzzerPin, 330, 300); // 미
-    delay(300);
-    tone(buzzerPin, 294, 300); // 레
-    delay(300);
-    tone(buzzerPin, 392, 600); // 솔
-    delay(600);
-
-    // 소절 간 대기
-    delay(1000);
+void playMelody() {
+    unsigned long currentTime = millis();
+    if (currentTime - noteStartTime >= duration[currentNote]) {
+        tone(buzzerPin, melody[currentNote]);
+        noteStartTime = currentTime;
+        currentNote++;
+        if (currentNote >= noteCount) {
+            currentNote = 0; // 멜로디 반복
+        }
+    }
 }
-
-// 시계 모듈 년도, 달, 시간, 분, 초 받아오는 함수
-#define countof(a) (sizeof(a) / sizeof(a[0]))
 
 void printDateTime(const RtcDateTime& dt) {
     char datestring[20];
-    snprintf_P(datestring, 
-            countof(datestring),
-            PSTR("%02u/%02u/%04u %02u:%02u:%02u"),
-            dt.Month(),
-            dt.Day(),
-            dt.Year(),
-            dt.Hour(),
-            dt.Minute(),
-            dt.Second());
-    Serial.print(datestring); // 시리얼 모니터에 출력
+    snprintf_P(datestring, sizeof(datestring), PSTR("%02u/%02u/%04u %02u:%02u:%02u"),
+               dt.Month(), dt.Day(), dt.Year(), dt.Hour(), dt.Minute(), dt.Second());
+    Serial.print(datestring);
 }
