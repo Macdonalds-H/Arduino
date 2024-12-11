@@ -3,11 +3,19 @@
 #include <LiquidCrystal_I2C.h>
 #include <Servo.h>
 
+#define ENA 6   // 왼쪽 바퀴 속도 제어 (PWM 핀)
+#define IN1 7   // 왼쪽 바퀴 제어 핀 1
+#define IN2 8   // 왼쪽 바퀴 제어 핀 2
+
+#define ENB 11  // 오른쪽 바퀴 속도 제어 (PWM 핀)
+#define IN3 9   // 오른쪽 바퀴 제어 핀 1
+#define IN4 10  // 오른쪽 바퀴 제어 핀 2
+
 ThreeWire myWire(4, 5, 3); // IO, SCLK, CE 디지털 연결 번호
 RtcDS1302<ThreeWire> Rtc(myWire);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // LCD 주소, 크기 (16x2)
 
-int buzzerPin = 8;       // 부저 핀
+int buzzerPin = 13;       // 부저 핀 8 -> 13
 int btnPin = 2;          // 버튼 핀
 int resetPin = 0; // 알람 리셋 핀
 int count = 0; // 알람 카운트
@@ -38,13 +46,22 @@ void setup() {
     lcd.print("RTC Initialized");
     delay(2000);
 
-    myServo1.attach(9); // 서보1 핀 번호 9
+    myServo1.attach(1); // 서보1 핀 번호 9 - > 1
     myServo1.write(brow_R); // 오른쪽 눈썹(= 서보1) 초기 각도 설정
-    myServo2.attach(7); // 서보2 핀 번호 7
+    myServo2.attach(0); // 서보2 핀 번호 7 -> 0
     myServo2.write(brow_L); // 왼쪽 눈썹(서보2) 초기 각도 설정
     Serial.begin(9600); // 시리얼 통신 시작
     Serial.println("서보 제어 프로그램 시작");
     Serial.println("1: 각도 증가, 2: 원래 각도로 복귀");
+
+    // 핀 모드 설정
+    // pinMode(ENA, OUTPUT);
+    // pinMode(IN1, OUTPUT);
+    // pinMode(IN2, OUTPUT);
+
+    // pinMode(ENB, OUTPUT);
+    // pinMode(IN3, OUTPUT);
+    // pinMode(IN4, OUTPUT);
 }
 
 void loop() {
@@ -88,6 +105,7 @@ void loop() {
               Serial.println("시작");
               playMelody();
               Serial.println("끝남");
+              // stopMovement();
               if(count == 3){
                  eyebrow(count);
               }
@@ -108,9 +126,23 @@ void playMelody() {
   int delays[] =    { 300, 300, 600, 300, 300, 600, 300, 300, 300, 300, 600, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 600, 600 };
    for (int i = 0; i < 25; i++) {
     // 버튼 상태를 계속 확인
-    if (i == 1){
-      eyebrow(count);
-    }
+    // if (i == 1){
+    //   eyebrow(count);
+    //   moveForward();
+    // }
+    // if (i == 7){
+    //    moveBackward();
+    // }
+    // if (i == 13){
+    //   turnLeft();
+    // }
+    // if(i==16){
+    //   moveForward();
+    // }
+    // if(i==21){
+    //   turnRight();
+    // }
+
     int btnState = digitalRead(btnPin); // 버튼 상태 읽기
     if (btnState == HIGH) {
       Serial.println("Button pressed, stopping melody.");
@@ -166,4 +198,54 @@ void eyebrow(int alarmcount){
     myServo2.write(brow_L); // 왼쪽 눈썹 각도를 180도로 설정
     Serial.println("왼쪽 눈썹 원래 각도로 복귀");
   }
+}
+
+// 모든 모터 정지 함수
+void stopMovement() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+}
+
+// 전진
+void moveForward() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 255); // 왼쪽 바퀴 속도
+  analogWrite(ENB, 255); // 오른쪽 바퀴 속도
+}
+
+// 후진
+void moveBackward() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(ENA, 255); // 왼쪽 바퀴 속도
+  analogWrite(ENB, 255); // 오른쪽 바퀴 속도
+}
+
+// 좌회전
+void turnLeft() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 0);   // 왼쪽 바퀴 정지
+  analogWrite(ENB, 255); // 오른쪽 바퀴 속도
+}
+
+// 우회전
+void turnRight() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENA, 255); // 왼쪽 바퀴 속도
+  analogWrite(ENB, 0);   // 오른쪽 바퀴 정지
 }
