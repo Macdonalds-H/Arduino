@@ -1,6 +1,3 @@
-#include <Arduino.h>
-
-// 핀 정의
 #define ENA 6   // 왼쪽 바퀴 속도 제어 (PWM 핀)
 #define IN1 7   // 왼쪽 바퀴 제어 핀 1
 #define IN2 8   // 왼쪽 바퀴 제어 핀 2
@@ -18,29 +15,16 @@ void setup() {
   pinMode(ENB, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
-
-  // 랜덤 시드 설정 (아날로그 핀의 노이즈로 시드 생성)
-  randomSeed(analogRead(0));
 }
 
 void loop() {
-  int direction = random(1, 5); // 1 ~ 4까지의 랜덤 값 생성
-
-  switch (direction) {
-    case 1:
-      moveForward();
-      break;
-    case 2:
-      moveBackward();
-      break;
-    case 3:
-      turnLeft();
-      break;
-    case 4:
-      turnRight();
-      break;
-  }
-
+  moveForward();
+  delay(12000);
+  moveBackward();
+  delay(12000);
+  turnLeft();
+  delay(12000);
+  turnRight();
   delay(12000);
 }
 
