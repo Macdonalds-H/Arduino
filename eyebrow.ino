@@ -25,33 +25,33 @@ void loop() {
     char input = Serial.read(); // 시리얼 모니터에서 입력값 읽기
     
     if (input == '1') { // '1'을 입력받으면
-      if (angle1 < 60) { // 첫 번째 서보의 최대 각도는 60도
-        angle1 += 30;
-        if (angle1 > 60) {
-          angle1 = 60; // 첫 번째 서보 각도가 60도를 초과하지 않도록 제한
+      if (angle1 < 50) { // 첫 번째 서보의 최대 각도는 50도
+        angle1 += 25;
+        if (angle1 > 50) {
+          angle1 = 50; // 첫 번째 서보 각도가 50도를 초과하지 않도록 제한
         }
         myServo1.write(angle1); // 첫 번째 서보 각도 설정
-        Serial.print("첫 번째 서보 현재 각도: ");
+        Serial.print("서보1 현재 각도: ");
         Serial.println(angle1);
       } 
       
-      if (angle2 > 120) { // 두 번째 서보의 최소 각도는 120도
-        angle2 -= 30;
-        if (angle2 < 120) {
-          angle2 = 120; // 두 번째 서보 각도가 120도 미만이 되지 않도록 제한
+      if (angle2 > 130) { // 두 번째 서보의 최소 각도는 130도
+        angle2 -= 25;
+        if (angle2 < 130) {
+          angle2 = 130; // 두 번째 서보 각도가 130도 미만이 되지 않도록 제한
         }
         myServo2.write(angle2); // 두 번째 서보 각도 설정
-        Serial.print("두 번째 서보 현재 각도: ");
+        Serial.print("서보2 현재 각도: ");
         Serial.println(angle2);
       }
     } else if (input == '2') { // '2'를 입력받으면
       angle1 = 0;
       myServo1.write(angle1); // 첫 번째 서보 각도를 0도로 설정
-      Serial.println("첫 번째 서보가 원래 각도로 복귀했습니다.");
+      Serial.println("첫 번째 서보가 원래 각도로 복귀");
       
       angle2 = 180;
       myServo2.write(angle2); // 두 번째 서보 각도를 180도로 설정
-      Serial.println("두 번째 서보가 원래 각도로 복귀했습니다.");
+      Serial.println("두 번째 서보가 원래 각도로 복귀");
     
     }
   }
