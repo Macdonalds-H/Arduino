@@ -55,13 +55,13 @@ void setup() {
     Serial.println("1: 각도 증가, 2: 원래 각도로 복귀");
 
     // 핀 모드 설정
-    // pinMode(ENA, OUTPUT);
-    // pinMode(IN1, OUTPUT);
-    // pinMode(IN2, OUTPUT);
+    pinMode(ENA, OUTPUT);
+    pinMode(IN1, OUTPUT);
+    pinMode(IN2, OUTPUT);
 
-    // pinMode(ENB, OUTPUT);
-    // pinMode(IN3, OUTPUT);
-    // pinMode(IN4, OUTPUT);
+    pinMode(ENB, OUTPUT);
+    pinMode(IN3, OUTPUT);
+    pinMode(IN4, OUTPUT);
 }
 
 void loop() {
@@ -105,7 +105,7 @@ void loop() {
               Serial.println("시작");
               playMelody();
               Serial.println("끝남");
-              // stopMovement();
+              stopMovement();
               if(count == 3){
                  eyebrow(count);
               }
@@ -126,22 +126,22 @@ void playMelody() {
   int delays[] =    { 300, 300, 600, 300, 300, 600, 300, 300, 300, 300, 600, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 600, 600 };
    for (int i = 0; i < 25; i++) {
     // 버튼 상태를 계속 확인
-    // if (i == 1){
-    //   eyebrow(count);
-    //   moveForward();
-    // }
-    // if (i == 7){
-    //    moveBackward();
-    // }
-    // if (i == 13){
-    //   turnLeft();
-    // }
-    // if(i==16){
-    //   moveForward();
-    // }
-    // if(i==21){
-    //   turnRight();
-    // }
+    if (i == 1){
+      eyebrow(count);
+      moveForward();
+    }
+    if (i == 7){
+       moveBackward();
+    }
+    if (i == 13){
+      turnLeft();
+    }
+    if(i==16){
+      moveForward();
+    }
+    if(i==21){
+      turnRight();
+    }
 
     int btnState = digitalRead(btnPin); // 버튼 상태 읽기
     if (btnState == HIGH) {
