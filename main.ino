@@ -87,8 +87,10 @@ void loop() {
           if (isBuzzerOn) {
               Serial.println("시작");
               playMelody();
-              eyebrow();
               Serial.println("끝남");
+              if(count == 3){
+                 eyebrow(count);
+              }
           }
       } else {
           noTone(buzzerPin); // 알람 시간이 아니면 부저 끄기
@@ -97,28 +99,31 @@ void loop() {
       Serial.print("카운트 종료");
     }
 
-    delay(10000); // 1초 대기
+    delay(3000); // 1초 대기
 }
 
 void playMelody() {
-  count = count + 1;
   int melody[] =    { 330, 330, 330, 330, 330, 330, 330, 392, 262, 294, 330, 349, 349, 349, 349, 349, 330, 330, 330, 330, 294, 294, 330, 294, 392 };
   int durations[] = { 300, 300, 600, 300, 300, 600, 300, 300, 300, 300, 600, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 600};
   int delays[] =    { 300, 300, 600, 300, 300, 600, 300, 300, 300, 300, 600, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 600, 600 };
    for (int i = 0; i < 25; i++) {
     // 버튼 상태를 계속 확인
+    if (i == 1){
+      eyebrow(count);
+    }
     int btnState = digitalRead(btnPin); // 버튼 상태 읽기
     if (btnState == HIGH) {
       Serial.println("Button pressed, stopping melody.");
       // 버튼으로 꺼짐 -> 상태변화 주기 --
       count = 3;
+      eyebrow(count);
       return; // 버튼이 눌리면 함수 종료
     }
 
     tone(buzzerPin, melody[i], durations[i]); // 현재 음 재생
     delay(delays[i]);
   }
-
+  count = count + 1;
   // 소절 간 대기
   delay(1000);
 }
@@ -130,8 +135,8 @@ void printDateTime(const RtcDateTime& dt) {
     Serial.print(datestring);
 }
 
-void eyebrow(){
-  if (count == '1') { // '1'을 입력받으면 --> 알람이 울리면
+void eyebrow(int alarmcount){
+  if (alarmcount == 1 || alarmcount == 2) { // '1'을 입력받으면 --> 알람이 울리면
     if (brow_R < 50) { // 오른쪽 눈썹 최대 각도 50도
       brow_R += 25;
       if (brow_R > 50) {
@@ -151,7 +156,8 @@ void eyebrow(){
       Serial.print("서보2 현재 각도: ");
       Serial.println(brow_L);
     }
-  } else if (count == '2') { // '2'를 입력받으면 --> 알람을 끄면
+  } 
+  if (alarmcount > 2) { // '2'를 입력받으면 --> 알람을 끄면
     brow_R = 0;
     myServo1.write(brow_R); // 오른쪽 눈썹 각도를 0도로 설정
     Serial.println("오른쪽 눈썹 원래 각도로 복귀");
