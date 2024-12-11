@@ -19,13 +19,13 @@ void setup() {
 
 void loop() {
   moveForward();
-  delay(12000);
+  delay(5000);
   moveBackward();
-  delay(12000);
+  delay(5000);
   turnLeft();
-  delay(12000);
+  delay(3000);
   turnRight();
-  delay(12000);
+  delay(3000);
 }
 
 // 전진
