@@ -9,21 +9,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // LCD 주소, 크기 (16x2)
 int buzzerPin = 8;       // 부저 핀
 int btnPin = 2;          // 버튼 핀
 
-// Jingle Bells 음계 및 길이
-int melody[] = {
-    330, 330, 330, 330, 330, 330, 330, 392, 262, 294, 330, 349, 349, 349, 349, 349, 
-    330, 330, 330, 330, 294, 294, 262, 294, 392
-};
-int duration[] = {
-    300, 300, 600, 300, 300, 600, 300, 300, 450, 150, 900, 300, 300, 450, 150, 300, 
-    300, 300, 300, 300, 300, 300, 300, 600, 300
-};
-
-int noteCount = sizeof(melody) / sizeof(melody[0]);
-int currentNote = 0;              // 현재 음표 인덱스
-unsigned long noteStartTime = 0;  // 음표 시작 시간
-
-bool isBuzzerOn = false;          // 부저 상태 (기본값: 꺼짐)
+bool isBuzzerOn = true; // 부저 상태 (기본값: 꺼짐)
 
 void setup() {
     Serial.begin(9600);
@@ -58,12 +44,12 @@ void loop() {
         buttonPressed = !buttonPressed; // 상태 토글
         if (buttonPressed) {
             isBuzzerOn = true; // 부저 켜기
-              // 부저 소리 끄기
+             
             Serial.println("Button Pressed: Buzzer ON");
         } else {
             isBuzzerOn = false; // 부저 끄기
-            Serial.println("Button Released: Buzzer FF");
-            noTone(buzzerPin);
+            noTone(buzzerPin); // 부저 소리 끄기
+            Serial.println("Button Released: Buzzer OFF");
         }
     }
 
@@ -93,15 +79,62 @@ void loop() {
 }
 
 void playMelody() {
-    unsigned long currentTime = millis();
-    if (currentTime - noteStartTime >= duration[currentNote]) {
-        tone(buzzerPin, melody[currentNote]);
-        noteStartTime = currentTime;
-        currentNote++;
-        if (currentNote >= noteCount) {
-            currentNote = 0; // 멜로디 반복
-        }
-    }
+    // 첫 번째 소절
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 330, 600); // 미
+  delay(600);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 330, 600); // 미
+  delay(600);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 392, 300); // 솔
+  delay(300);
+  tone(buzzerPin, 262, 300); // 도
+  delay(300);
+  tone(buzzerPin, 294, 300); // 레
+  delay(300);
+  tone(buzzerPin, 330, 600); // 미
+  delay(600);
+
+  // 두 번째 소절
+  tone(buzzerPin, 349, 300); // 파
+  delay(300);
+  tone(buzzerPin, 349, 300); // 파
+  delay(300);
+  tone(buzzerPin, 349, 300); // 파
+  delay(300);
+  tone(buzzerPin, 349, 300); // 파
+  delay(300);
+  tone(buzzerPin, 349, 300); // 파
+  delay(300);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 294, 300); // 레
+  delay(300);
+  tone(buzzerPin, 294, 300); // 레
+  delay(300);
+  tone(buzzerPin, 330, 300); // 미
+  delay(300);
+  tone(buzzerPin, 294, 300); // 레
+  delay(600);
+  tone(buzzerPin, 392, 600); // 솔
+  delay(600);
+
+  // 소절 간 대기
+  delay(1000);
 }
 
 void printDateTime(const RtcDateTime& dt) {
