@@ -11,13 +11,16 @@
 #define IN3 9   // 오른쪽 바퀴 제어 핀 1
 #define IN4 10  // 오른쪽 바퀴 제어 핀 2
 
+#define button1Pin A0 // 첫 번째 버튼 (감소)
+#define button2Pin A1 // 두 번째 버튼 (조절/저장)
+#define button3Pin 1 // 세 번째 버튼 (증가)
+
 ThreeWire myWire(4, 5, 3); // IO, SCLK, CE 디지털 연결 번호
 RtcDS1302<ThreeWire> Rtc(myWire);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // LCD 주소, 크기 (16x2)
 
 int buzzerPin = 13;       // 부저 핀 8 -> 13
 int btnPin = 2;          // 버튼 핀
-int resetPin = 0; // 알람 리셋 핀
 int count = 0; // 알람 카운트
 bool isBuzzerOn = true; // 부저 상태 (기본값: 꺼짐)
 
@@ -26,6 +29,12 @@ Servo myServo2; // 두 번째 서보 객체 생성 (= 왼쪽 눈썹)
 int brow_R = 0; // 오른쪽 눈썹 초기화 각도
 int brow_L = 180; // 왼쪽 눈썹 초기화 각도
 
+// 변수 초기화
+int currentIntake = 0; // 현재 섭취량
+int targetIntake = 1500; // 목표 섭취량
+int tempIntake = 0; // 임시 섭취량
+bool adjustMode = false; // 조절 모드 플래그
+
 void setup() {
     Serial.begin(9600);
     lcd.begin();
@@ -33,9 +42,8 @@ void setup() {
     Rtc.Begin();
     pinMode(buzzerPin, OUTPUT);
     pinMode(btnPin, INPUT_PULLUP); // 버튼 핀을 풀업 저항으로 설정
-    pinMode(resetPin, INPUT_PULLUP); // 알람 리셋 핀을 풀업 저항으로 설정
     // RTC 모듈 초기화 (2024년 12월 9일 오전 12시 2분)
-    RtcDateTime compiled(2024, 12, 9, 12, 2, 58);
+    RtcDateTime compiled(2024, 12, 12, 12, 2, 50);
     Rtc.SetDateTime(compiled);
 
     // 초기화 메시지 출력
@@ -45,10 +53,9 @@ void setup() {
     lcd.clear();
     lcd.print("RTC Initialized");
     delay(2000);
-
-    myServo1.attach(1); // 서보1 핀 번호 9 - > 1
+    myServo1.attach(12); // 서보1 핀 번호 9 - > 12
     myServo1.write(brow_R); // 오른쪽 눈썹(= 서보1) 초기 각도 설정
-    myServo2.attach(0); // 서보2 핀 번호 7 -> 0
+    myServo2.attach(7); // 서보2 핀 번호 7 -> 2
     myServo2.write(brow_L); // 왼쪽 눈썹(서보2) 초기 각도 설정
     Serial.begin(9600); // 시리얼 통신 시작
     Serial.println("서보 제어 프로그램 시작");
@@ -62,6 +69,10 @@ void setup() {
     pinMode(ENB, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
+
+    pinMode(button1Pin, INPUT_PULLUP);
+    pinMode(button2Pin, INPUT_PULLUP);
+    pinMode(button3Pin, INPUT_PULLUP);
 }
 
 void loop() {
@@ -94,20 +105,25 @@ void loop() {
       Serial.println();
 
       // 특정 시간에 LCD 메시지 출력 및 멜로디 재생
-      if (now.Year() == 2024 && now.Month() == 12 && now.Day() == 9 && now.Hour() == 12 && now.Minute() == 3) {
+      if (now.Year() == 2024 && now.Month() == 12 && now.Day() == 12 && now.Hour() == 12 && now.Minute() == 3) {
           lcd.clear();
-          lcd.print("2024-12-9");
+          lcd.print("2024-12-12");
           lcd.setCursor(0, 1);
           lcd.print("Wake Up!");
 
           // 부저 상태가 켜져 있으면 멜로디 재생
           if (isBuzzerOn) {
+              if(count == 0){
+                 Serial.print(brow_R);
+                 Serial.print(brow_L);
+                 Serial.println(" 눈썹각도");
+              }
               Serial.println("시작");
               playMelody();
               Serial.println("끝남");
               stopMovement();
               if(count == 3){
-                 eyebrow(count);
+                 // eyebrow(count);
               }
           }
       } else {
@@ -115,8 +131,8 @@ void loop() {
       }
     }else{
       Serial.print("카운트 종료");
+      updateIntake();
     }
-
     delay(3000); // 1초 대기
 }
 
@@ -248,4 +264,55 @@ void turnRight() {
   digitalWrite(IN4, LOW);
   analogWrite(ENA, 255); // 왼쪽 바퀴 속도
   analogWrite(ENB, 0);   // 오른쪽 바퀴 정지
+}
+// 현재 상태 화면 업데이트
+void updateDisplay() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Intake: ");
+  lcd.print(currentIntake);
+  lcd.print(" ml");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Target: ");
+  lcd.print(targetIntake);
+  lcd.print(" ml");
+}
+
+// 조절 모드 화면 업데이트
+void updateAdjustDisplay() {
+  lcd.setCursor(0, 1);
+  lcd.print("Adjust: ");
+  lcd.print(tempIntake);
+  lcd.print(" ml    ");
+}
+
+void updateIntake(){
+  updateDisplay();
+  while(1){
+  
+  // 조절 모드
+    if (digitalRead(button1Pin) == LOW) {
+      // 첫 번째 버튼으로 10ml 감소
+      tempIntake = max(0, tempIntake - 10);
+      updateAdjustDisplay();
+      delay(200);
+    }
+
+    if (digitalRead(button3Pin) == LOW) {
+      // 세 번째 버튼으로 10ml 증가
+      tempIntake += 10;
+      updateAdjustDisplay();
+      delay(200);
+    }
+
+    if (digitalRead(button2Pin) == LOW) {
+      // 가운데 버튼을 눌러 저장
+      currentIntake = min(targetIntake, currentIntake + tempIntake);
+      adjustMode = false;
+      updateDisplay();
+      delay(200); // 디바운싱
+    }
+  }
+  
 }
